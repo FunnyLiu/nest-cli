@@ -1,0 +1,103 @@
+digraph G {
+	graph [bb="0,0,1144,268",
+		bgcolor="#111111",
+		layout=dot,
+		overlap=false,
+		pad=0.3,
+		rankdir=LR
+	];
+	node [color="#c6c5fe",
+		fontcolor="#c6c5fe",
+		fontname=Arial,
+		fontsize="14px",
+		height=0,
+		label="\N",
+		shape=box,
+		style=rounded
+	];
+	edge [color="#757575"];
+	"../actions/abstract.action.ts"	 [color="#cfffac",
+		fontcolor="#cfffac",
+		height=0.31944,
+		pos="744,134",
+		width=2.5278];
+	"../lib/schematics/abstract.collection.ts"	 [height=0.31944,
+		pos="744,31",
+		width=3.4306];
+	"../lib/schematics/schematic.option.ts"	 [color="#cfffac",
+		fontcolor="#cfffac",
+		height=0.31944,
+		pos="1024,11",
+		width=3.3333];
+	"../lib/schematics/abstract.collection.ts" -> "../lib/schematics/schematic.option.ts"	 [pos="e,903.65,19.586 867.74,22.169 876.32,21.553 884.97,20.93 893.58,20.311"];
+	"../lib/schematics/nest.collection.ts"	 [height=0.31944,
+		pos="472,11",
+		width=3.0972];
+	"../lib/schematics/nest.collection.ts" -> "../lib/schematics/abstract.collection.ts"	 [pos="e,620.27,21.909 583.6,19.192 592.38,19.843 601.31,20.504 610.22,21.164"];
+	"../lib/schematics/nest.collection.ts" -> "../lib/schematics/schematic.option.ts"	 [pos="e,903.68,10.153 583.77,10.166 595.99,10.098 608.26,10.04 620,10 730.22,9.6251 757.78,9.6444 868,10 876.32,10.027 884.88,10.062 893.52,\
+10.102"];
+	"../lib/utils/remaining-flags.ts"	 [color="#cfffac",
+		fontcolor="#cfffac",
+		height=0.31944,
+		pos="472,257",
+		width=2.5694];
+	"abstract.command.ts"	 [height=0.31944,
+		pos="472,134",
+		width=2.0278];
+	"abstract.command.ts" -> "../actions/abstract.action.ts"	 [pos="e,652.84,134 545,134 574.88,134 610.08,134 642.44,134"];
+	"add.command.ts"	 [height=0.31944,
+		pos="248,257",
+		width=1.6667];
+	"add.command.ts" -> "../lib/utils/remaining-flags.ts"	 [pos="e,379.35,257 308.2,257 326.97,257 348.28,257 369.15,257"];
+	"add.command.ts" -> "abstract.command.ts"	 [pos="e,457.76,145.5 298.27,245.75 307.03,243.04 315.93,239.8 324,236 372.65,213.11 422.72,174.54 450.04,151.96"];
+	"command.input.ts"	 [color="#cfffac",
+		fontcolor="#cfffac",
+		height=0.31944,
+		pos="472,93",
+		width=1.7639];
+	"add.command.ts" -> "command.input.ts"	 [pos="e,408.33,92.416 308.31,246.8 314.09,244 319.48,240.47 324,236 364.51,195.96 317.64,151.08 360,113 370.61,103.47 384.16,97.74 398.13,\
+94.424"];
+	"build.command.ts"	 [height=0.31944,
+		pos="248,93",
+		width=1.75];
+	"build.command.ts" -> "abstract.command.ts"	 [pos="e,409.79,122.7 309.96,104.26 337.74,109.39 370.82,115.5 399.75,120.84"];
+	"build.command.ts" -> "command.input.ts"	 [pos="e,408.5,93 311.13,93 338.21,93 370.13,93 398.3,93"];
+	"command.loader.ts"	 [height=0.31944,
+		pos="68,134",
+		width=1.8889];
+	"command.loader.ts" -> "add.command.ts"	 [pos="e,193.58,245.68 77.262,145.38 93.178,166.48 130.23,211.71 172,236 175.85,238.24 179.95,240.25 184.18,242.06"];
+	"command.loader.ts" -> "build.command.ts"	 [pos="e,198.05,104.28 118.11,122.69 139.8,117.69 165.48,111.78 188.19,106.55"];
+	"generate.command.ts"	 [height=0.31944,
+		pos="248,11",
+		width=2.1111];
+	"command.loader.ts" -> "generate.command.ts"	 [pos="e,191.2,22.331 77.207,122.45 93.03,101.06 129.94,55.252 172,31 175.07,29.23 178.3,27.613 181.63,26.135"];
+	"info.command.ts"	 [height=0.31944,
+		pos="248,216",
+		width=1.6528];
+	"command.loader.ts" -> "info.command.ts"	 [pos="e,199.54,204.74 85.063,145.33 104.75,158.77 139.51,181.12 172,195 177.71,197.44 183.79,199.68 189.92,201.72"];
+	"new.command.ts"	 [height=0.31944,
+		pos="248,52",
+		width=1.6944];
+	"command.loader.ts" -> "new.command.ts"	 [pos="e,196.72,63.309 84.658,122.64 104.22,108.92 139.14,85.939 172,72 176.76,69.98 181.78,68.115 186.88,66.406"];
+	"start.command.ts"	 [height=0.31944,
+		pos="248,175",
+		width=1.7222];
+	"command.loader.ts" -> "start.command.ts"	 [pos="e,198.05,163.72 118.11,145.31 139.8,150.31 165.48,156.22 188.19,161.45"];
+	"update.command.ts"	 [height=0.31944,
+		pos="248,134",
+		width=1.9306];
+	"command.loader.ts" -> "update.command.ts"	 [pos="e,178.24,134 136.04,134 146.5,134 157.38,134 168.07,134"];
+	"generate.command.ts" -> "../lib/schematics/nest.collection.ts"	 [pos="e,360.44,11 324.16,11 332.66,11 341.47,11 350.37,11"];
+	"generate.command.ts" -> "abstract.command.ts"	 [pos="e,398.82,130.74 310.71,22.374 315.5,24.736 320.01,27.579 324,31 354.21,56.91 328.85,88.22 360,113 368.52,119.78 378.56,124.6 389.07,\
+128.01"];
+	"generate.command.ts" -> "command.input.ts"	 [pos="e,446.95,81.639 295.31,22.273 304.87,24.9 314.82,27.857 324,31 363.79,44.622 408.09,63.896 437.56,77.325"];
+	"info.command.ts" -> "abstract.command.ts"	 [pos="e,446.38,145.29 292.9,204.66 303.18,201.75 314.03,198.45 324,195 363.41,181.36 407.45,162.6 436.96,149.5"];
+	"new.command.ts" -> "abstract.command.ts"	 [pos="e,398.95,127.56 305.8,63.253 312.18,65.636 318.39,68.518 324,72 344.6,84.787 338.94,100.98 360,113 368.97,118.12 378.95,122.02 389.14,\
+124.99"];
+	"new.command.ts" -> "command.input.ts"	 [pos="e,409.72,81.682 309.08,63.095 336.99,68.25 370.39,74.418 399.58,79.81"];
+	"start.command.ts" -> "abstract.command.ts"	 [pos="e,409.79,145.3 309.96,163.74 337.74,158.61 370.82,152.5 399.75,147.16"];
+	"start.command.ts" -> "command.input.ts"	 [pos="e,408.27,96.839 303.85,163.67 310.91,161.07 317.82,157.89 324,154 344.52,141.09 338.89,124.93 360,113 371.62,106.44 384.91,101.95 \
+398.17,98.902"];
+	"update.command.ts" -> "abstract.command.ts"	 [pos="e,398.76,134 317.72,134 340.13,134 365.24,134 388.55,134"];
+	"update.command.ts" -> "command.input.ts"	 [pos="e,408.46,104.17 308.03,122.73 324.82,119.56 343.12,116.12 360,113 372.38,110.71 385.55,108.31 398.32,106"];
+}

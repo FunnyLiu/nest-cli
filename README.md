@@ -118,6 +118,7 @@
 
 ## 内部模块依赖
 
+![img](./graphviz/command.loader.gv.svg)
 
 ## 逐个文件分析
 
