@@ -10,7 +10,7 @@ const bootstrap = () => {
     .usage('<command> [options]');
   CommandLoader.load(program);
   commander.parse(process.argv);
-
+  // 默认输出帮助
   if (!program.args.length) {
     program.outputHelp();
   }

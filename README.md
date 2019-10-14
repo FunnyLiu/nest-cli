@@ -1,3 +1,139 @@
+# 源码分析
+
+## 文件结构
+
+``` bash
+├── actions
+|  ├── abstract.action.ts
+|  ├── add.action.ts
+|  ├── build.action.ts
+|  ├── generate.action.ts
+|  ├── index.ts
+|  ├── info.action.ts
+|  ├── new.action.ts
+|  ├── start.action.ts
+|  └── update.action.ts
+├── bin
+|  └── nest.ts - 注册入口文件，将commander模块传入commands/index.ts的load方法。
+├── commands
+|  ├── abstract.command.ts
+|  ├── add.command.ts
+|  ├── build.command.ts
+|  ├── command.input.ts
+|  ├── command.loader.ts
+|  ├── generate.command.ts
+|  ├── index.ts
+|  ├── info.command.ts
+|  ├── new.command.ts
+|  ├── start.command.ts
+|  └── update.command.ts
+├── e2e - 集成测试相关
+├── gulpfile.js
+├── lib
+|  ├── compiler
+|  |  ├── assets-manager.ts
+|  |  ├── compiler.ts
+|  |  ├── defaults
+|  |  |  └── webpack-defaults.ts
+|  |  ├── helpers
+|  |  |  ├── append-extension.ts
+|  |  |  ├── get-value-or-default.ts
+|  |  |  └── tsconfig-provider.ts
+|  |  ├── hooks
+|  |  |  └── tsconfig-paths.hook.ts
+|  |  ├── plugins-loader.ts
+|  |  ├── watch-compiler.ts
+|  |  ├── webpack-compiler.ts
+|  |  └── workspace-utils.ts
+|  ├── configuration
+|  |  ├── configuration.loader.ts
+|  |  ├── configuration.ts
+|  |  ├── defaults.ts
+|  |  ├── index.ts
+|  |  └── nest-configuration.loader.ts
+|  ├── dependency-managers
+|  |  ├── index.ts
+|  |  └── nest.dependency-manager.ts
+|  ├── package-managers
+|  |  ├── abstract.package-manager.ts
+|  |  ├── index.ts
+|  |  ├── npm.package-manager.ts
+|  |  ├── package-manager-commands.ts
+|  |  ├── package-manager.factory.ts
+|  |  ├── package-manager.ts
+|  |  ├── project.dependency.ts
+|  |  └── yarn.package-manager.ts
+|  ├── questions
+|  |  └── questions.ts
+|  ├── readers
+|  |  ├── file-system.reader.ts
+|  |  ├── index.ts
+|  |  └── reader.ts
+|  ├── runners
+|  |  ├── abstract.runner.ts
+|  |  ├── git.runner.ts
+|  |  ├── index.ts
+|  |  ├── npm.runner.ts
+|  |  ├── runner.factory.ts
+|  |  ├── runner.ts
+|  |  ├── schematic.runner.ts
+|  |  └── yarn.runner.ts
+|  ├── schematics
+|  |  ├── abstract.collection.ts
+|  |  ├── collection.factory.ts
+|  |  ├── collection.ts
+|  |  ├── custom.collection.ts
+|  |  ├── index.ts
+|  |  ├── nest.collection.ts
+|  |  └── schematic.option.ts
+|  ├── ui
+|  |  ├── banner.ts
+|  |  ├── emojis.ts
+|  |  ├── errors.ts
+|  |  ├── index.ts
+|  |  ├── messages.ts
+|  |  └── prefixes.ts
+|  └── utils
+|     ├── is-error.ts
+|     └── remaining-flags.ts
+├── scripts
+|  └── check-version.js
+├── tools
+|  └── gulp
+|     ├── config.ts
+|     ├── gulpfile.ts
+|     ├── tasks
+|     |  └── clean.ts
+|     ├── tsconfig.json
+|     └── util
+|        └── task-helpers.ts
+├── tsconfig.json
+├── tslint.json
+└── yarn.lock
+```
+
+## 外部模块依赖
+
+[过于复杂，参加](http://npm.broofa.com/?q=@nestjs/cli)
+
+## 内部模块依赖
+
+
+## 逐个文件分析
+
+### bin/nest.ts
+
+注册入口文件，基于commander模块，将模块内容传入commands/index.ts提供的load方法。
+
+默认没参数则输出帮助help。
+
+
+
+
+
+---
+
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
 </p>
