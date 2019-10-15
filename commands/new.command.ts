@@ -2,7 +2,7 @@ import { Command, CommanderStatic } from 'commander';
 import { Collection } from '../lib/schematics';
 import { AbstractCommand } from './abstract.command';
 import { Input } from './command.input';
-
+//继承自commands/abstract.command.ts的基类
 export class NewCommand extends AbstractCommand {
   public load(program: CommanderStatic) {
     program
@@ -47,7 +47,7 @@ export class NewCommand extends AbstractCommand {
 
         const inputs: Input[] = [];
         inputs.push({ name: 'name', value: name });
-
+        // 调用this.action.handle来进行真正的处理
         await this.action.handle(inputs, options);
       });
   }

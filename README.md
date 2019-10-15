@@ -16,15 +16,15 @@
 ├── bin
 |  └── nest.ts - 注册入口文件，将commander模块传入commands/index.ts的load方法。
 ├── commands
-|  ├── abstract.command.ts
+|  ├── abstract.command.ts - 抽象类，用于给其他子命令实现
 |  ├── add.command.ts
 |  ├── build.command.ts
-|  ├── command.input.ts
-|  ├── command.loader.ts
+|  ├── command.input.ts - 仅暴露接口Input
+|  ├── command.loader.ts - 进行所有子命令的初始化。
 |  ├── generate.command.ts
-|  ├── index.ts
+|  ├── index.ts - 直接对外暴露commands/command.loader.ts和commands/command.input.ts
 |  ├── info.command.ts
-|  ├── new.command.ts
+|  ├── new.command.ts - 提供new命令
 |  ├── start.command.ts
 |  └── update.command.ts
 ├── e2e - 集成测试相关
@@ -114,7 +114,7 @@
 
 ## 外部模块依赖
 
-[过于复杂，参加](http://npm.broofa.com/?q=@nestjs/cli)
+[过于复杂，参见](http://npm.broofa.com/?q=@nestjs/cli)
 
 ## 内部模块依赖
 
@@ -128,16 +128,38 @@
 
 默认没参数则输出帮助help。
 
+### commands/index.ts
 
+直接对外暴露commands/command.loader.ts和commands/command.input.ts
 
+### commands/command.loader.ts
 
+进行子命令的初始化。
+
+暴露定义的类CommandLoader。
+
+提供公有静态方法load()，调用commands文件夹下各个子文件如add.command.ts，build.command.ts等暴露的类的load方法，并在初始化类时将actions文件夹下对应的action实例传入构造函数。
+
+提供私有静态方法handleInvalidCommand()基于commander模块自带事件，校验输入命令是否合法。
+
+### commands/new.command.ts
+
+提供new命令，继承自commands/abstract.command.ts的基类。
+
+在load方法钟实现了参数的解析，最后调用this.action.handle来进行真正的处理。
 
 ---
 
+### commands/abstract.command.ts
 
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+抽象类，用于给其他子命令实现，必须由load方法，且构造函数参数必须是来自actions/abstract.action.ts的AbstractAction类型。
+
+
+
+
+
+
+
 
   <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
     <p align="center">

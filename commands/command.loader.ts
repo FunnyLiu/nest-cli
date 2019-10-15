@@ -30,8 +30,9 @@ export class CommandLoader {
 
     this.handleInvalidCommand(program);
   }
-
+  // 校验不合法的输入
   private static handleInvalidCommand(program: CommanderStatic) {
+    //基于commander模块自带事件，校验输入命令是否合法
     program.on('command:*', () => {
       console.error(
         `\n${ERROR_PREFIX} Invalid command: ${chalk.red('%s')}`,
