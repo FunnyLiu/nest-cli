@@ -4,29 +4,29 @@
 
 ``` bash
 ├── actions
-|  ├── abstract.action.ts
+|  ├── abstract.action.ts - 抽象类，用于约束子类实现
 |  ├── add.action.ts
 |  ├── build.action.ts
 |  ├── generate.action.ts
 |  ├── index.ts
 |  ├── info.action.ts
-|  ├── new.action.ts
+|  ├── new.action.ts - new命令后的相关操作
 |  ├── start.action.ts
 |  └── update.action.ts
 ├── bin
 |  └── nest.ts - 注册入口文件，将commander模块传入commands/index.ts的load方法。
 ├── commands
 |  ├── abstract.command.ts - 抽象类，用于给其他子命令实现
-|  ├── add.command.ts
-|  ├── build.command.ts
+|  ├── add.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
+|  ├── build.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
 |  ├── command.input.ts - 仅暴露接口Input
 |  ├── command.loader.ts - 进行所有子命令的初始化。
-|  ├── generate.command.ts
+|  ├── generate.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
 |  ├── index.ts - 直接对外暴露commands/command.loader.ts和commands/command.input.ts
-|  ├── info.command.ts
+|  ├── info.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
 |  ├── new.command.ts - 提供new命令
-|  ├── start.command.ts
-|  └── update.command.ts
+|  ├── start.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
+|  └── update.command.ts - 和new的实现类似，最终都是声明参数，拼接输入后，调用对应的action.handle
 ├── e2e - 集成测试相关
 ├── gulpfile.js
 ├── lib
@@ -64,7 +64,7 @@
 |  |  ├── project.dependency.ts
 |  |  └── yarn.package-manager.ts
 |  ├── questions
-|  |  └── questions.ts
+|  |  └── questions.ts - 封装了选择题和输入题
 |  ├── readers
 |  |  ├── file-system.reader.ts
 |  |  ├── index.ts

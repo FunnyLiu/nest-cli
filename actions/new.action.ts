@@ -23,7 +23,7 @@ import {
 } from '../lib/schematics';
 import { EMOJIS, MESSAGES } from '../lib/ui';
 import { AbstractAction } from './abstract.action';
-
+// 继承自抽象类AbstractAction，约束
 export class NewAction extends AbstractAction {
   public async handle(inputs: Input[], options: Input[]) {
     const dryRunOption = options.find(option => option.name === 'dry-run');
@@ -56,6 +56,7 @@ export class NewAction extends AbstractAction {
 
       printCollective();
     }
+    // 指向完后退出终端
     process.exit(0);
   }
 }
@@ -70,6 +71,7 @@ const askForMissingInformation = async (inputs: Input[]) => {
   const prompt: inquirer.PromptModule = inquirer.createPromptModule();
   const nameInput = getApplicationNameInput(inputs);
   if (!nameInput!.value) {
+    // 一个优雅的输入题
     const message = 'What name would you like to use for the new project?';
     const questions = [generateInput('name', message)('nest-app')];
     const answers: Answers = await prompt(questions as ReadonlyArray<Question>);
@@ -135,6 +137,7 @@ const installPackages = async (
   }
   if (inputPackageManager !== undefined) {
     try {
+      // 基于lib/package-managers.ts的PackageManagerFactory
       packageManager = PackageManagerFactory.create(inputPackageManager);
       await packageManager.install(installDirectory, inputPackageManager);
     } catch (error) {
@@ -150,7 +153,7 @@ const installPackages = async (
     );
   }
 };
-
+// 一个优雅的完整选择题
 const selectPackageManager = async (): Promise<AbstractPackageManager> => {
   const answers: Answers = await askForPackageManager();
   return PackageManagerFactory.create(answers['package-manager']);

@@ -3,7 +3,7 @@ import { AbstractPackageManager } from './abstract.package-manager';
 import { NpmPackageManager } from './npm.package-manager';
 import { PackageManager } from './package-manager';
 import { YarnPackageManager } from './yarn.package-manager';
-
+// 包管理工厂方法类
 export class PackageManagerFactory {
   public static create(name: PackageManager | string): AbstractPackageManager {
     switch (name) {
