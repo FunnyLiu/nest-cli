@@ -1,14 +1,16 @@
 import { existsSync } from 'fs';
 import { dirname, join, normalize, relative } from 'path';
 import webpack = require('webpack');
+
 import { Configuration } from '../configuration';
 import { INFO_PREFIX } from '../ui';
+import { AssetsManager } from './assets-manager';
 import { webpackDefaultsFactory } from './defaults/webpack-defaults';
 import { getValueOrDefault } from './helpers/get-value-or-default';
 import { PluginsLoader } from './plugins-loader';
 
 export class WebpackCompiler {
-  constructor(private readonly pluginsLoader: PluginsLoader) { }
+  constructor(private readonly pluginsLoader: PluginsLoader) {}
 
   public run(
     configuration: Required<Configuration>,
@@ -19,6 +21,7 @@ export class WebpackCompiler {
     appName: string,
     isDebugEnabled = false,
     watchMode = false,
+    assetsManager: AssetsManager,
     onSuccess?: () => void,
   ) {
     const cwd = process.cwd();
@@ -68,7 +71,7 @@ export class WebpackCompiler {
     const webpackConfiguration = {
       ...defaultOptions,
       ...projectWebpackOptions,
-    }
+    };
     const compiler = webpack(webpackConfiguration);
 
     const afterCallback = (err: Error, stats: any) => {
@@ -80,7 +83,14 @@ export class WebpackCompiler {
         warningsFilter: /^(?!CriticalDependenciesWarning$)/,
       });
       if (!err && !stats.hasErrors()) {
-        onSuccess && onSuccess();
+        if (!onSuccess) {
+          assetsManager.closeWatchers();
+        } else {
+          onSuccess();
+        }
+      } else if (!watchMode && !webpackConfiguration.watch) {
+        console.log(statsOutput);
+        return process.exit(1);
       }
       console.log(statsOutput);
     };

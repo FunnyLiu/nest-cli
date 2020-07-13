@@ -1,9 +1,19 @@
 export type Asset = 'string' | AssetEntry;
 export interface AssetEntry {
+  glob: string;
   include?: string;
   flat?: boolean;
   exclude?: string;
   outDir?: string;
+  watchAssets?: boolean;
+}
+
+export interface ActionOnFile {
+  action: 'change' | 'unlink';
+  item: AssetEntry;
+  path: string;
+  sourceRoot: string;
+  watchAssetsMode: boolean;
 }
 
 interface CompilerOptions {
@@ -13,6 +23,10 @@ interface CompilerOptions {
   plugins?: string[];
   assets?: string[];
   deleteOutDir?: boolean;
+}
+
+interface GenerateOptions {
+  spec?: boolean | Record<string, boolean>;
 }
 
 export interface ProjectConfiguration {
@@ -31,6 +45,7 @@ export interface Configuration {
   entryFile?: string;
   monorepo?: boolean;
   compilerOptions?: CompilerOptions;
+  generateOptions?: GenerateOptions;
   projects?: {
     [key: string]: ProjectConfiguration;
   };

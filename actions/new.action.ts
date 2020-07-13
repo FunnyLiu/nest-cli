@@ -1,5 +1,5 @@
 import { dasherize } from '@angular-devkit/core/src/utils/strings';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as inquirer from 'inquirer';
@@ -26,6 +26,7 @@ import { AbstractAction } from './abstract.action';
 // 继承自抽象类AbstractAction，约束
 export class NewAction extends AbstractAction {
   public async handle(inputs: Input[], options: Input[]) {
+    const directoryOption = options.find(option => option.name === 'directory');
     const dryRunOption = options.find(option => option.name === 'dry-run');
     const isDryRunEnabled = dryRunOption && dryRunOption.value;
 
@@ -38,8 +39,10 @@ export class NewAction extends AbstractAction {
     const shouldSkipGit = options.some(
       option => option.name === 'skip-git' && option.value === true,
     );
-    const projectDirectory = dasherize(getApplicationNameInput(inputs)!
-      .value as string);
+    const projectDirectory = getProjectDirectory(
+      getApplicationNameInput(inputs)!,
+      directoryOption,
+    );
 
     if (!shouldSkipInstall) {
       await installPackages(
@@ -63,6 +66,16 @@ export class NewAction extends AbstractAction {
 
 const getApplicationNameInput = (inputs: Input[]) =>
   inputs.find(input => input.name === 'name');
+
+const getProjectDirectory = (
+  applicationName: Input,
+  directoryOption?: Input,
+): string => {
+  return (
+    (directoryOption && (directoryOption.value as string)) ||
+    dasherize(applicationName.value as string)
+  );
+};
 
 const askForMissingInformation = async (inputs: Input[]) => {
   console.info(MESSAGES.PROJECT_INFORMATION_START);

@@ -1,22 +1,20 @@
-import chalk from 'chalk';
-import * as inquirer from 'inquirer';
-import { Answers, Question } from 'inquirer';
+import * as chalk from 'chalk';
+import { Answers } from 'inquirer';
 import { Input } from '../commands';
 import { getValueOrDefault } from '../lib/compiler/helpers/get-value-or-default';
-import {
-  Configuration,
-  ConfigurationLoader,
-  ProjectConfiguration,
-} from '../lib/configuration';
-import { NestConfigurationLoader } from '../lib/configuration/nest-configuration.loader';
-import { generateSelect } from '../lib/questions/questions';
-import { FileSystemReader } from '../lib/readers';
 import {
   AbstractCollection,
   CollectionFactory,
   SchematicOption,
 } from '../lib/schematics';
 import { MESSAGES } from '../lib/ui';
+import { loadConfiguration } from '../lib/utils/load-configuration';
+import {
+  askForProjectName,
+  moveDefaultProjectToStart,
+  shouldAskForProject,
+  shouldGenerateSpec,
+} from '../lib/utils/project-utils';
 import { AbstractAction } from './abstract.action';
 
 export class GenerateAction extends AbstractAction {
@@ -33,6 +31,7 @@ const generateFiles = async (inputs: Input[]) => {
     .value as string;
   const appName = inputs.find(option => option.name === 'project')!
     .value as string;
+  const spec = inputs.find(option => option.name === 'spec');
 
   const collection: AbstractCollection = CollectionFactory.create(
     collectionOption || configuration.collection,
@@ -47,10 +46,20 @@ const generateFiles = async (inputs: Input[]) => {
     ? getValueOrDefault(configuration, 'sourceRoot', appName)
     : configuration.sourceRoot;
 
+  const specValue = spec!.value as boolean;
+  const specOptions = spec!.options as any;
+  let generateSpec = shouldGenerateSpec(
+    configuration,
+    schematic,
+    appName,
+    specValue,
+    specOptions.passedAsInput,
+  );
+
   // If you only add a `lib` we actually don't have monorepo: true BUT we do have "projects"
   // Ensure we don't run for new app/libs schematics
   if (shouldAskForProject(schematic, configurationProjects, appName)) {
-    const defaultLabel: string = ' [ Default ]';
+    const defaultLabel = ' [ Default ]';
     let defaultProjectName: string = configuration.sourceRoot + defaultLabel;
 
     for (const property in configurationProjects) {
@@ -68,14 +77,30 @@ const generateFiles = async (inputs: Input[]) => {
       defaultLabel,
     );
 
-    const answers: Answers = await askForProjectName(projects);
+    const answers: Answers = await askForProjectName(
+      MESSAGES.PROJECT_SELECTION_QUESTION,
+      projects,
+    );
+
     const project: string = answers.appName.replace(defaultLabel, '');
     if (project !== configuration.sourceRoot) {
       sourceRoot = configurationProjects[project].sourceRoot;
     }
+
+    if (answers.appName !== defaultProjectName) {
+      // Only overwrite if the appName is not the default- as it has already been loaded above
+      generateSpec = shouldGenerateSpec(
+        configuration,
+        schematic,
+        answers.appName,
+        specValue,
+        specOptions.passedAsInput,
+      );
+    }
   }
 
   schematicOptions.push(new SchematicOption('sourceRoot', sourceRoot));
+  schematicOptions.push(new SchematicOption('spec', generateSpec));
   try {
     const schematicInput = inputs.find(input => input.name === 'schematic');
     if (!schematicInput) {
@@ -89,55 +114,13 @@ const generateFiles = async (inputs: Input[]) => {
   }
 };
 
-const moveDefaultProjectToStart = (
-  configuration: Configuration,
-  defaultProjectName: string,
-  defaultLabel: string,
-) => {
-  let projects: string[] = Object.keys(configuration.projects as {});
-  if (configuration.sourceRoot !== 'src') {
-    projects = projects.filter(
-      p => p !== defaultProjectName.replace(defaultLabel, ''),
-    );
-  }
-  projects.unshift(defaultProjectName);
-  return projects;
-};
-
-const askForProjectName = async (projects: string[]): Promise<Answers> => {
-  const questions: Question[] = [
-    generateSelect('appName')(MESSAGES.PROJECT_SELECTION_QUESTION)(projects),
-  ];
-  const prompt = inquirer.createPromptModule();
-  return await prompt(questions);
-};
-
-const loadConfiguration = async (): Promise<Required<Configuration>> => {
-  const loader: ConfigurationLoader = new NestConfigurationLoader(
-    new FileSystemReader(process.cwd()),
-  );
-  return loader.load();
-};
-
 const mapSchematicOptions = (inputs: Input[]): SchematicOption[] => {
+  const excludedInputNames = ['schematic', 'spec'];
   const options: SchematicOption[] = [];
   inputs.forEach(input => {
-    if (input.name !== 'schematic' && input.value !== undefined) {
+    if (!excludedInputNames.includes(input.name) && input.value !== undefined) {
       options.push(new SchematicOption(input.name, input.value));
     }
   });
   return options;
-};
-
-const shouldAskForProject = (
-  schematic: string,
-  configurationProjects: { [key: string]: ProjectConfiguration },
-  appName: string,
-) => {
-  return (
-    ['app', 'sub-app', 'library', 'lib'].includes(schematic) === false &&
-    configurationProjects &&
-    Object.entries(configurationProjects).length !== 0 &&
-    !appName
-  );
 };

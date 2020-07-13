@@ -1,4 +1,4 @@
-import { resolve } from 'path';
+import { join } from 'path';
 import * as ts from 'typescript';
 import { isObject } from 'util';
 import { CLI_ERRORS } from '../ui';
@@ -12,13 +12,13 @@ interface PluginAndOptions {
 }
 
 export interface NestCompilerPlugin {
-  before?: (options?: Record<string, any>) => Transformer;
-  after?: (options?: Record<string, any>) => Transformer;
+  before?: (options?: Record<string, any>, program?: ts.Program) => Transformer;
+  after?: (options?: Record<string, any>, program?: ts.Program) => Transformer;
 }
 
 export interface MultiNestCompilerPlugins {
-  beforeHooks: Transformer[];
-  afterHooks: Transformer[];
+  beforeHooks: Array<(program?: ts.Program) => Transformer>;
+  afterHooks: Array<(program?: ts.Program) => Transformer>;
 }
 
 export class PluginsLoader {
@@ -26,11 +26,20 @@ export class PluginsLoader {
     const pluginNames = plugins.map(entry =>
       isObject(entry) ? (entry as PluginAndOptions).name : (entry as string),
     );
-    const pluginRefs: NestCompilerPlugin[] = pluginNames.map(item =>
-      require(resolve(item)),
-    );
-    const beforeHooks: Transformer[] = [];
-    const afterHooks: Transformer[] = [];
+    const nodeModulePaths = [
+      join(process.cwd(), 'node_modules'),
+      ...module.paths,
+    ];
+    const pluginRefs: NestCompilerPlugin[] = pluginNames.map(item => {
+      try {
+        const binaryPath = require.resolve(item, { paths: nodeModulePaths });
+        return require(binaryPath);
+      } catch (e) {
+        throw new Error(`"${item}" plugin could not be found!`);
+      }
+    });
+    const beforeHooks: MultiNestCompilerPlugins['afterHooks'] = [];
+    const afterHooks: MultiNestCompilerPlugins['beforeHooks'] = [];
     pluginRefs.forEach((plugin, index) => {
       if (!plugin.before && !plugin.after) {
         throw new Error(CLI_ERRORS.WRONG_PLUGIN(pluginNames[index]));
@@ -38,8 +47,9 @@ export class PluginsLoader {
       const options = isObject(plugins[index])
         ? (plugins[index] as PluginAndOptions).options || {}
         : {};
-      plugin.before && beforeHooks.push(plugin.before(options));
-      plugin.after && afterHooks.push(plugin.after(options));
+      plugin.before &&
+        beforeHooks.push(plugin.before.bind(plugin.before, options));
+      plugin.after && afterHooks.push(plugin.after.bind(plugin.after, options));
     });
     return {
       beforeHooks,

@@ -1,5 +1,5 @@
 import { dasherize } from '@angular-devkit/core/src/utils/strings';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { readFile } from 'fs';
 import * as ora from 'ora';
 import { join } from 'path';
@@ -49,7 +49,10 @@ export abstract class AbstractPackageManager {
     return this.runner.run(commandArguments, collect) as Promise<string>;
   }
 
-  public async addProduction(dependencies: string[], tag: string) {
+  public async addProduction(
+    dependencies: string[],
+    tag: string,
+  ): Promise<boolean> {
     const command: string = [this.cli.add, this.cli.saveFlag]
       .filter(i => i)
       .join(' ');
@@ -61,19 +64,21 @@ export abstract class AbstractPackageManager {
         interval: 120,
         frames: ['▹▹▹▹▹', '▸▹▹▹▹', '▹▸▹▹▹', '▹▹▸▹▹', '▹▹▹▸▹', '▹▹▹▹▸'],
       },
-      text: MESSAGES.PACKAGE_MANAGER_INSTALLATION_IN_PROGRESS,
+      text: MESSAGES.PACKAGE_MANAGER_PRODUCTION_INSTALLATION_IN_PROGRESS,
     });
     spinner.start();
     try {
       await this.add(`${command} ${args}`);
       spinner.succeed();
+      return true;
     } catch {
       spinner.fail();
+      return false;
     }
   }
 
   public async addDevelopment(dependencies: string[], tag: string) {
-    const command: string = `${this.cli.add} ${this.cli.saveDevFlag}`;
+    const command = `${this.cli.add} ${this.cli.saveDevFlag}`;
     const args: string = dependencies
       .map(dependency => `${dependency}@${tag}`)
       .join(' ');
@@ -125,14 +130,14 @@ export abstract class AbstractPackageManager {
   }
 
   public async updateProduction(dependencies: string[]) {
-    const commandArguments: string = `${this.cli.update} ${dependencies.join(
+    const commandArguments = `${this.cli.update} ${dependencies.join(
       ' ',
     )}`;
     await this.update(commandArguments);
   }
 
   public async updateDevelopement(dependencies: string[]) {
-    const commandArguments: string = `${this.cli.update} ${dependencies.join(
+    const commandArguments = `${this.cli.update} ${dependencies.join(
       ' ',
     )}`;
     await this.update(commandArguments);
@@ -162,7 +167,7 @@ export abstract class AbstractPackageManager {
   }
 
   public async deleteDevelopment(dependencies: string[]) {
-    const commandArguments: string = `${this.cli.remove} ${
+    const commandArguments = `${this.cli.remove} ${
       this.cli.saveDevFlag
     } ${dependencies.join(' ')}`;
     await this.delete(commandArguments);

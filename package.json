@@ -1,13 +1,13 @@
 {
   "name": "@nestjs/cli",
-  "version": "6.10.4",
+  "version": "7.4.1",
   "description": "Nest - modern, fast, powerful node.js web framework (@cli)",
   "publishConfig": {
     "access": "public"
   },
   "engines": {
-    "node": ">= 8.9.0",
-    "npm": ">= 5.5.1"
+    "node": ">= 10.13.0",
+    "npm": ">= 6.11.0"
   },
   "bin": {
     "nest": "bin/nest.js"
@@ -16,10 +16,16 @@
     "build": "tsc",
     "clean": "gulp clean:bundle",
     "format": "prettier --write \"**/*.ts\"",
-    "lint": "tslint -p .",
+    "lint": "eslint '{lib,commands,actions}/**/*.ts' --fix",
     "start": "node bin/nest.js",
+    "prepublish:next": "npm run build",
+    "publish:next": "npm publish --access public --tag next",
+    "prepublish:npm": "npm run build",
+    "publish:npm": "npm publish --access public",
     "test": "jest --config test/jest-config.json",
-    "test:dev": "jest --config test/jest-config.json --watchAll"
+    "test:dev": "npm run clean && jest --config test/jest-config.json --watchAll",
+    "prerelease": "npm run build",
+    "release": "release-it"
   },
   "repository": {
     "type": "git",
@@ -36,46 +42,61 @@
   },
   "homepage": "https://github.com/nestjs/nest-cli#readme",
   "dependencies": {
-    "@angular-devkit/core": "8.3.8",
-    "@angular-devkit/schematics": "8.3.8",
-    "@angular-devkit/schematics-cli": "0.803.8",
-    "@nestjs/schematics": "^6.6.3",
-    "@types/webpack": "4.39.2",
-    "chalk": "2.4.2",
+    "@angular-devkit/core": "10.0.1",
+    "@angular-devkit/schematics": "10.0.1",
+    "@angular-devkit/schematics-cli": "0.1000.1",
+    "@nestjs/schematics": "^7.0.1",
+    "@types/webpack": "4.41.21",
+    "chalk": "3.0.0",
+    "chokidar": "3.4.0",
     "cli-table3": "0.5.1",
-    "commander": "3.0.2",
-    "copyfiles": "2.1.1",
-    "fork-ts-checker-webpack-plugin": "1.5.0",
-    "inquirer": "7.0.0",
+    "commander": "4.1.1",
+    "fork-ts-checker-webpack-plugin": "5.0.7",
+    "inquirer": "7.3.0",
     "node-emoji": "1.10.0",
-    "ora": "4.0.2",
+    "ora": "4.0.4",
     "os-name": "3.1.0",
-    "path-to-regexp": "3.1.0",
-    "rimraf": "3.0.0",
-    "tree-kill": "1.2.1",
+    "rimraf": "3.0.2",
+    "shelljs": "0.8.4",
+    "tree-kill": "1.2.2",
+    "tsconfig-paths": "3.9.0",
     "tsconfig-paths-webpack-plugin": "3.2.0",
-    "webpack": "4.41.0",
-    "webpack-node-externals": "1.7.2"
+    "typescript": "^3.6.4",
+    "webpack": "4.43.0",
+    "webpack-node-externals": "2.3.0"
   },
   "devDependencies": {
-    "@types/copyfiles": "2.1.1",
+    "@commitlint/cli": "9.1.1",
+    "@commitlint/config-angular": "9.1.1",
+    "@types/copyfiles": "2.2.0",
     "@types/inquirer": "6.5.0",
-    "@types/jest": "24.0.18",
-    "@types/node": "12.7.12",
+    "@types/jest": "26.0.4",
+    "@types/node": "12.12.31",
     "@types/node-emoji": "1.8.1",
     "@types/ora": "3.1.0",
     "@types/os-name": "2.0.0",
-    "@types/rimraf": "2.0.2",
-    "@types/webpack-node-externals": "1.6.3",
+    "@types/rimraf": "3.0.0",
+    "@types/shelljs": "0.8.8",
+    "@types/webpack-node-externals": "1.7.1",
+    "@typescript-eslint/eslint-plugin": "^2.19.0",
+    "@typescript-eslint/parser": "^2.19.0",
     "delete-empty": "3.0.0",
+    "eslint": "7.4.0",
+    "eslint-config-prettier": "6.11.0",
+    "eslint-plugin-import": "2.22.0",
     "gulp": "4.0.2",
     "gulp-clean": "0.4.0",
-    "jest": "24.9.0",
-    "prettier": "1.18.2",
-    "ts-jest": "24.1.0",
-    "ts-loader": "6.2.0",
-    "ts-node": "8.4.1",
-    "tslint": "5.20.0",
-    "typescript": "3.6.3"
+    "husky": "4.2.5",
+    "jest": "26.1.0",
+    "prettier": "2.0.5",
+    "release-it": "13.6.5",
+    "ts-jest": "26.1.1",
+    "ts-loader": "8.0.0",
+    "ts-node": "8.10.2"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -c .commitlintrc.json -E HUSKY_GIT_PARAMS"
+    }
   }
 }

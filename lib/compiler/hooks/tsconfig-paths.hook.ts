@@ -1,35 +1,64 @@
-import { dirname, join, relative } from 'path';
-import * as pathToRegexp from 'path-to-regexp';
+import * as os from 'os';
+import { dirname, posix } from 'path';
 import * as ts from 'typescript';
+import { TypeScriptBinaryLoader } from '../typescript-loader';
+import tsPaths = require('tsconfig-paths');
 
 export function tsconfigPathsBeforeHookFactory(
   compilerOptions: ts.CompilerOptions,
 ) {
-  const { paths = {}, baseUrl } = compilerOptions;
-  const pathsToInspect = Object.keys(paths).map(path => ({
-    matcher: pathToRegexp(path),
-    originalPath: path,
-  }));
+  const tsBinary = new TypeScriptBinaryLoader().load();
+  const { paths = {}, baseUrl = './' } = compilerOptions;
+  const matcher = tsPaths.createMatchPath(baseUrl!, paths, ['main']);
 
   return (ctx: ts.TransformationContext): ts.Transformer<any> => {
-    const head = (arr: [string]): string => arr && arr[0];
     return (sf: ts.SourceFile) => {
-      const imports: ts.StringLiteral[] = (sf as any).imports || [];
-      imports.forEach(item => {
-        const result = pathsToInspect.find(({ matcher }) =>
-          matcher.test(item.text),
-        );
-        if (!result) {
-          return;
+      const visitNode = (node: ts.Node): ts.Node => {
+        if (
+          tsBinary.isImportDeclaration(node) ||
+          (tsBinary.isExportDeclaration(node) && node.moduleSpecifier)
+        ) {
+          try {
+            const newNode = tsBinary.getMutableClone(node);
+            const importPathWithQuotes =
+              node.moduleSpecifier && node.moduleSpecifier.getText();
+
+            if (!importPathWithQuotes) {
+              return node;
+            }
+            const text = importPathWithQuotes.substr(
+              1,
+              importPathWithQuotes.length - 2,
+            );
+            const result = getNotAliasedPath(sf, matcher, text);
+            if (!result) {
+              return node;
+            }
+            newNode.moduleSpecifier = tsBinary.createLiteral(result);
+            return newNode;
+          } catch {
+            return node;
+          }
         }
-        const resolvedPath =
-          relative(
-            dirname(sf.fileName),
-            join(baseUrl!, head(paths[result.originalPath] as [string])),
-          ) || './';
-        item.text = item.text.replace(result.matcher, resolvedPath);
-      });
-      return sf;
+        return tsBinary.visitEachChild(node, visitNode, ctx);
+      };
+      return tsBinary.visitNode(sf, visitNode);
     };
   };
+}
+
+function getNotAliasedPath(
+  sf: ts.SourceFile,
+  matcher: tsPaths.MatchPath,
+  text: string,
+) {
+  let result = matcher(text, undefined, undefined, ['.ts', '.js']);
+  if (!result) {
+    return;
+  }
+  if (os.platform() === 'win32') {
+    result = result.replace(/\\/g, '/');
+  }
+  const resolvedPath = posix.relative(dirname(sf.fileName), result) || './';
+  return resolvedPath[0] === '.' ? resolvedPath : './' + resolvedPath;
 }

@@ -4,17 +4,13 @@ import { getValueOrDefault } from './helpers/get-value-or-default';
 import { TsConfigProvider } from './helpers/tsconfig-provider';
 import { tsconfigPathsBeforeHookFactory } from './hooks/tsconfig-paths.hook';
 import { PluginsLoader } from './plugins-loader';
+import { TypeScriptBinaryLoader } from './typescript-loader';
 
 export class Compiler {
-  private readonly formatHost: ts.FormatDiagnosticsHost = {
-    getCanonicalFileName: path => path,
-    getCurrentDirectory: ts.sys.getCurrentDirectory,
-    getNewLine: () => ts.sys.newLine,
-  };
-
   constructor(
     private readonly pluginsLoader: PluginsLoader,
     private readonly tsConfigProvider: TsConfigProvider,
+    private readonly typescriptLoader: TypeScriptBinaryLoader,
   ) {}
 
   public run(
@@ -23,12 +19,22 @@ export class Compiler {
     appName: string,
     onSuccess?: () => void,
   ) {
+    const tsBinary = this.typescriptLoader.load();
+    const formatHost: ts.FormatDiagnosticsHost = {
+      getCanonicalFileName: path => path,
+      getCurrentDirectory: tsBinary.sys.getCurrentDirectory,
+      getNewLine: () => tsBinary.sys.newLine,
+    };
+
     const {
       options,
       fileNames,
       projectReferences,
     } = this.tsConfigProvider.getByConfigFilename(configFilename);
-    const program = ts.createProgram({
+
+    const createProgram =
+      tsBinary.createIncrementalProgram || tsBinary.createProgram;
+    const program = createProgram.call(ts, {
       rootNames: fileNames,
       projectReferences,
       options,
@@ -41,40 +47,54 @@ export class Compiler {
     );
     const plugins = this.pluginsLoader.load(pluginsConfig);
     const tsconfigPathsPlugin = tsconfigPathsBeforeHookFactory(options);
+    const programRef = program.getProgram
+      ? program.getProgram()
+      : ((program as any) as ts.Program);
+    const before = plugins.beforeHooks.map(hook => hook(programRef));
+    const after = plugins.afterHooks.map(hook => hook(programRef));
     const emitResult = program.emit(
       undefined,
       undefined,
       undefined,
       undefined,
       {
-        before: plugins.beforeHooks.concat(tsconfigPathsPlugin),
-        after: plugins.afterHooks,
+        before: before.concat(tsconfigPathsPlugin),
+        after,
         afterDeclarations: [],
       },
     );
-    this.reportAfterCompilationDiagnostic(program, emitResult);
 
-    const exitCode = emitResult.emitSkipped ? 1 : 0;
-    if (exitCode) {
-      console.log(`Process exiting with code '${exitCode}'.`);
-      process.exit(exitCode);
-    } else {
-      onSuccess && onSuccess();
+    const errorsCount = this.reportAfterCompilationDiagnostic(
+      program as any,
+      emitResult,
+      tsBinary,
+      formatHost,
+    );
+    if (errorsCount) {
+      process.exit(1);
+    } else if (!errorsCount && onSuccess) {
+      onSuccess();
     }
   }
 
   private reportAfterCompilationDiagnostic(
-    program: ts.Program,
+    program: ts.EmitAndSemanticDiagnosticsBuilderProgram,
     emitResult: ts.EmitResult,
-  ) {
-    const diagnostics = ts
-      .getPreEmitDiagnostics(program)
+    tsBinary: typeof ts,
+    formatHost: ts.FormatDiagnosticsHost,
+  ): number {
+    const diagnostics = tsBinary
+      .getPreEmitDiagnostics((program as unknown) as ts.Program)
       .concat(emitResult.diagnostics);
-    console.error(
-      ts.formatDiagnosticsWithColorAndContext(diagnostics, this.formatHost),
-    );
+
     if (diagnostics.length > 0) {
-      console.info(`Found ${diagnostics.length} error(s).` + ts.sys.newLine);
+      console.error(
+        tsBinary.formatDiagnosticsWithColorAndContext(diagnostics, formatHost),
+      );
+      console.info(
+        `Found ${diagnostics.length} error(s).` + tsBinary.sys.newLine,
+      );
     }
+    return diagnostics.length;
   }
 }

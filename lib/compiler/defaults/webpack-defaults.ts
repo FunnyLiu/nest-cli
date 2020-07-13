@@ -1,11 +1,11 @@
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import { join } from 'path';
 import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin';
-import webpack = require('webpack');
-import nodeExternals = require('webpack-node-externals');
 import { defaultConfiguration } from '../../configuration/defaults';
 import { appendTsExtension } from '../helpers/append-extension';
 import { MultiNestCompilerPlugins } from '../plugins-loader';
+import webpack = require('webpack');
+import nodeExternals = require('webpack-node-externals');
 
 export const webpackDefaultsFactory = (
   sourceRoot: string,
@@ -30,10 +30,11 @@ export const webpackDefaultsFactory = (
           {
             loader: 'ts-loader',
             options: {
+              transpileOnly: !isAnyPluginRegistered(plugins),
               configFile: tsConfigFile,
               getCustomTransformers: (program: any) => ({
-                before: plugins.beforeHooks,
-                after: plugins.afterHooks,
+                before: plugins.beforeHooks.map((hook) => hook(program)),
+                after: plugins.afterHooks.map((hook) => hook(program)),
               }),
             },
           },
@@ -51,6 +52,13 @@ export const webpackDefaultsFactory = (
     ],
   },
   mode: 'none',
+  optimization: {
+    nodeEnv: false,
+  },
+  node: {
+    __filename: false,
+    __dirname: false,
+  },
   plugins: [
     new webpack.IgnorePlugin({
       checkResource(resource: any) {
@@ -64,7 +72,9 @@ export const webpackDefaultsFactory = (
           return false;
         }
         try {
-          require.resolve(resource);
+          require.resolve(resource, {
+            paths: [process.cwd()],
+          });
         } catch (err) {
           return true;
         }
@@ -72,7 +82,16 @@ export const webpackDefaultsFactory = (
       },
     }),
     new ForkTsCheckerWebpackPlugin({
-      tsconfig: tsConfigFile,
+      typescript: {
+        configFile: tsConfigFile,
+      },
     }),
   ],
 });
+
+function isAnyPluginRegistered(plugins: MultiNestCompilerPlugins) {
+  return (
+    (plugins.afterHooks && plugins.afterHooks.length > 0) ||
+    (plugins.beforeHooks && plugins.beforeHooks.length > 0)
+  );
+}

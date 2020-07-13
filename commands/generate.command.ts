@@ -11,13 +11,26 @@ export class GenerateCommand extends AbstractCommand {
       .command('generate <schematic> [name] [path]')
       .alias('g')
       .description(this.buildDescription())
-      .option('--dry-run', 'Allow to test changes before command execution')
-      .option('-p, --project [project]', 'Project in which to generate files')
-      .option('--flat', 'Enforce flat structure of generated element')
-      .option('--no-spec', 'Disable spec files generation')
+      .option(
+        '-d, --dry-run',
+        'Report actions that would be taken without writing out results.',
+      )
+      .option('-p, --project [project]', 'Project in which to generate files.')
+      .option('--flat', 'Enforce flat structure of generated element.')
+      .option(
+        '--spec',
+        'Enforce spec files generation.',
+        () => {
+          return { value: true, passedAsInput: true };
+        },
+        true,
+      )
+      .option('--no-spec', 'Disable spec files generation.', () => {
+        return { value: false, passedAsInput: true };
+      })
       .option(
         '-c, --collection [collectionName]',
-        'Collection that shall be used',
+        'Schematics collection to use.',
       )
       .action(
         async (
@@ -31,7 +44,16 @@ export class GenerateCommand extends AbstractCommand {
           options.push({ name: 'flat', value: command.flat });
           options.push({
             name: 'spec',
-            value: command.spec,
+            value:
+              typeof command.spec === 'boolean'
+                ? command.spec
+                : command.spec.value,
+            options: {
+              passedAsInput:
+                typeof command.spec === 'boolean'
+                  ? false
+                  : command.spec.passedAsInput,
+            },
           });
           options.push({
             name: 'collection',
@@ -54,7 +76,7 @@ export class GenerateCommand extends AbstractCommand {
 
   private buildDescription(): string {
     return (
-      'Generate a Nest element\n' +
+      'Generate a Nest element.\n' +
       '  Available schematics:\n' +
       this.buildSchematicsListAsTable()
     );

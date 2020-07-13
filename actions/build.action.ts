@@ -1,12 +1,13 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { join } from 'path';
-import webpack = require('webpack');
+import { CompilerOptions } from 'typescript';
 import { Input } from '../commands';
 import { AssetsManager } from '../lib/compiler/assets-manager';
 import { Compiler } from '../lib/compiler/compiler';
 import { getValueOrDefault } from '../lib/compiler/helpers/get-value-or-default';
 import { TsConfigProvider } from '../lib/compiler/helpers/tsconfig-provider';
 import { PluginsLoader } from '../lib/compiler/plugins-loader';
+import { TypeScriptBinaryLoader } from '../lib/compiler/typescript-loader';
 import { WatchCompiler } from '../lib/compiler/watch-compiler';
 import { WebpackCompiler } from '../lib/compiler/webpack-compiler';
 import { WorkspaceUtils } from '../lib/compiler/workspace-utils';
@@ -18,18 +19,22 @@ import { defaultOutDir } from '../lib/configuration/defaults';
 import { FileSystemReader } from '../lib/readers';
 import { ERROR_PREFIX } from '../lib/ui';
 import { AbstractAction } from './abstract.action';
+import webpack = require('webpack');
 
 export class BuildAction extends AbstractAction {
   protected readonly pluginsLoader = new PluginsLoader();
-  protected readonly tsConfigProvider = new TsConfigProvider();
+  protected readonly tsLoader = new TypeScriptBinaryLoader();
+  protected readonly tsConfigProvider = new TsConfigProvider(this.tsLoader);
   protected readonly compiler = new Compiler(
     this.pluginsLoader,
     this.tsConfigProvider,
+    this.tsLoader,
   );
   protected readonly webpackCompiler = new WebpackCompiler(this.pluginsLoader);
   protected readonly watchCompiler = new WatchCompiler(
     this.pluginsLoader,
     this.tsConfigProvider,
+    this.tsLoader,
   );
   protected readonly fileSystemReader = new FileSystemReader(process.cwd());
   protected readonly loader: ConfigurationLoader = new NestConfigurationLoader(
@@ -42,7 +47,15 @@ export class BuildAction extends AbstractAction {
     try {
       const watchModeOption = options.find(option => option.name === 'watch');
       const watchMode = !!(watchModeOption && watchModeOption.value);
-      await this.runBuild(inputs, options, watchMode);
+
+      const watchAssetsModeOption = options.find(
+        option => option.name === 'watchAssets',
+      );
+      const watchAssetsMode = !!(
+        watchAssetsModeOption && watchAssetsModeOption.value
+      );
+
+      await this.runBuild(inputs, options, watchMode, watchAssetsMode);
     } catch (err) {
       if (err instanceof Error) {
         console.log(`\n${ERROR_PREFIX} ${err.message}\n`);
@@ -56,10 +69,13 @@ export class BuildAction extends AbstractAction {
     inputs: Input[],
     options: Input[],
     watchMode: boolean,
+    watchAssetsMode: boolean,
     isDebugEnabled = false,
     onSuccess?: () => void,
   ) {
-    const configuration = await this.loader.load();
+    const configFileName = options.find(option => option.name === 'config')!
+      .value as string;
+    const configuration = await this.loader.load(configFileName);
     const appName = inputs.find(input => input.name === 'app')!.value as string;
 
     const pathToTsconfig = getValueOrDefault<string>(
@@ -85,7 +101,12 @@ export class BuildAction extends AbstractAction {
       appName,
       outDir,
     );
-    await this.assetsManager.copyAssets(configuration, appName, outDir);
+    this.assetsManager.copyAssets(
+      configuration,
+      appName,
+      outDir,
+      watchAssetsMode,
+    );
 
     if (isWebpackEnabled) {
       const webpackPath = getValueOrDefault<string>(
@@ -107,14 +128,30 @@ export class BuildAction extends AbstractAction {
         appName,
         isDebugEnabled,
         watchMode,
+        this.assetsManager,
         onSuccess,
       );
     }
 
     if (watchMode) {
-      this.watchCompiler.run(configuration, pathToTsconfig, appName, onSuccess);
+      const tsCompilerOptions: CompilerOptions = {};
+      const isPreserveWatchOutputEnabled = options.find(
+        option =>
+          option.name === 'preserveWatchOutput' && option.value === true,
+      );
+      if (isPreserveWatchOutputEnabled) {
+        tsCompilerOptions.preserveWatchOutput = true;
+      }
+      this.watchCompiler.run(
+        configuration,
+        pathToTsconfig,
+        appName,
+        tsCompilerOptions,
+        onSuccess,
+      );
     } else {
       this.compiler.run(configuration, pathToTsconfig, appName, onSuccess);
+      this.assetsManager.closeWatchers();
     }
   }
 

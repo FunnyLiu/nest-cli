@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ChildProcess, spawn, SpawnOptions } from 'child_process';
 import { MESSAGES } from '../ui';
 
@@ -7,7 +7,7 @@ export class AbstractRunner {
 
   public async run(
     command: string,
-    collect: boolean = false,
+    collect = false,
     cwd: string = process.cwd(),
   ): Promise<null | string> {
     const args: string[] = [command];

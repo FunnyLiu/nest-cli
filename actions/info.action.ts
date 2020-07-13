@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { readFile } from 'fs';
 import { platform, release } from 'os';
 import osName = require('os-name');
@@ -42,14 +42,15 @@ const displayPackageManagerVersion = async () => {
   const manager: AbstractPackageManager = await PackageManagerFactory.find();
   try {
     const version: string = await manager.version();
-    console.info(`${manager.name} Version    :`, chalk.blue(version));
+    console.info(`${manager.name} Version    :`, chalk.blue(version), '\n');
   } catch {
-    console.error(`${manager.name} Version    :`, chalk.red('Unknown'));
+    console.error(`${manager.name} Version    :`, chalk.red('Unknown'), '\n');
   }
 };
 
 const displayNestInformation = async () => {
-  console.info(chalk.green('[Nest Information]'));
+  displayCliVersion();
+  console.info(chalk.green('[Nest Platform Information]'));
   try {
     const dependencies: PackageJsonDependencies = await readProjectPackageJsonDependencies();
     displayNestVersions(dependencies);
@@ -58,9 +59,16 @@ const displayNestInformation = async () => {
   }
 };
 
-const readProjectPackageJsonDependencies = async (): Promise<
-  PackageJsonDependencies
-> => {
+const displayCliVersion = () => {
+  console.info(chalk.green('[Nest CLI]'));
+  console.info(
+    'Nest CLI Version :',
+    chalk.blue(require('../package.json').version),
+    '\n',
+  );
+};
+
+const readProjectPackageJsonDependencies = async (): Promise<PackageJsonDependencies> => {
   return new Promise<PackageJsonDependencies>((resolve, reject) => {
     readFile(
       join(process.cwd(), 'package.json'),

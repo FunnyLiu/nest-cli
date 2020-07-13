@@ -40,7 +40,9 @@ export class NestCollection extends AbstractCollection {
   }
 
   public static getSchematics(): Schematic[] {
-    return NestCollection.schematics;
+    return NestCollection.schematics.filter(
+      item => item.name !== 'angular-app',
+    );
   }
 
   private validate(name: string) {
@@ -50,7 +52,7 @@ export class NestCollection extends AbstractCollection {
 
     if (schematic === undefined || schematic === null) {
       throw new Error(
-        `Invalid schematic "${name}". Please, ensure that "${name}" really exists in this collection.`,
+        `Invalid schematic "${name}". Please, ensure that "${name}" exists in this collection.`,
       );
     }
     return schematic.name;

@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -13,7 +13,9 @@ import { BuildAction } from './build.action';
 export class StartAction extends BuildAction {
   public async handle(inputs: Input[], options: Input[]) {
     try {
-      const configuration = await this.loader.load();
+      const configFileName = options.find(option => option.name === 'config')!
+        .value as string;
+      const configuration = await this.loader.load(configFileName);
       const appName = inputs.find(input => input.name === 'app')!
         .value as string;
 
@@ -25,10 +27,19 @@ export class StartAction extends BuildAction {
         options,
       );
 
-      const watchModeOption = options.find(option => option.name === 'watch');
+      const binaryToRunOption = options.find(option => option.name === 'exec');
       const debugModeOption = options.find(option => option.name === 'debug');
+      const watchModeOption = options.find(option => option.name === 'watch');
       const isWatchEnabled = !!(watchModeOption && watchModeOption.value);
+      const watchAssetsModeOption = options.find(
+        option => option.name === 'watchAssets',
+      );
+      const isWatchAssetsEnabled = !!(
+        watchAssetsModeOption && watchAssetsModeOption.value
+      );
       const debugFlag = debugModeOption && debugModeOption.value;
+      const binaryToRun =
+        binaryToRunOption && (binaryToRunOption.value as string | undefined);
 
       const { options: tsOptions } = this.tsConfigProvider.getByConfigFilename(
         pathToTsconfig,
@@ -39,12 +50,14 @@ export class StartAction extends BuildAction {
         appName,
         debugFlag,
         outDir,
+        binaryToRun,
       );
 
       await this.runBuild(
         inputs,
         options,
         isWatchEnabled,
+        isWatchAssetsEnabled,
         !!debugFlag,
         onSuccess,
       );
@@ -62,6 +75,7 @@ export class StartAction extends BuildAction {
     appName: string,
     debugFlag: boolean | string | undefined,
     outDirName: string,
+    binaryToRun = 'node',
   ) {
     const sourceRoot = getValueOrDefault(configuration, 'sourceRoot', appName);
     const entryFile = getValueOrDefault(configuration, 'entryFile', appName);
@@ -69,7 +83,7 @@ export class StartAction extends BuildAction {
     let childProcessRef: any;
     process.on(
       'exit',
-      code => childProcessRef && killProcess(childProcessRef.pid),
+      () => childProcessRef && killProcess(childProcessRef.pid),
     );
 
     return () => {
@@ -81,6 +95,7 @@ export class StartAction extends BuildAction {
             sourceRoot,
             debugFlag,
             outDirName,
+            binaryToRun,
           );
           childProcessRef.on('exit', () => (childProcessRef = undefined));
         });
@@ -93,6 +108,7 @@ export class StartAction extends BuildAction {
           sourceRoot,
           debugFlag,
           outDirName,
+          binaryToRun,
         );
         childProcessRef.on('exit', () => (childProcessRef = undefined));
       }
@@ -104,6 +120,7 @@ export class StartAction extends BuildAction {
     sourceRoot: string,
     debug: boolean | string | undefined,
     outDirName: string,
+    binaryToRun: string,
   ) {
     let outputFilePath = join(outDirName, sourceRoot, entryFile);
     if (!fs.existsSync(outputFilePath + '.js')) {
@@ -115,13 +132,16 @@ export class StartAction extends BuildAction {
     if (argsStartIndex >= 0) {
       childProcessArgs = process.argv.slice(argsStartIndex + 1);
     }
+    outputFilePath =
+      outputFilePath.indexOf(' ') >= 0 ? `"${outputFilePath}"` : outputFilePath;
+
     const processArgs = [outputFilePath, ...childProcessArgs];
     if (debug) {
       const inspectFlag =
         typeof debug === 'string' ? `--inspect=${debug}` : '--inspect';
       processArgs.unshift(inspectFlag);
     }
-    return spawn('node', processArgs, {
+    return spawn(binaryToRun, processArgs, {
       stdio: 'inherit',
       shell: true,
     });
